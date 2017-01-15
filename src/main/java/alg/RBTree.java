@@ -15,24 +15,24 @@ public class RBTree<K, V> implements Tree<K,V> {
     private final Comparator<K> comparator;
     private int size;
 
-    Node<K, V> root;
+    RBNode<K, V> root;
 
     public RBTree(Comparator<K> comparator) {
         this.comparator = comparator;
     }
 
 
-    static final class Node<K, V> {
+    static final class RBNode<K, V> {
         final K key;
         V value;
 
-        Node<K, V> parent;
-        Node<K, V> left;
-        Node<K, V> right;
+        RBNode<K, V> parent;
+        RBNode<K, V> left;
+        RBNode<K, V> right;
 
         Color color = RED;
 
-        Node(K key, V value) {
+        RBNode(K key, V value) {
             this.key = key;
             this.value = value;
         }
@@ -78,14 +78,14 @@ public class RBTree<K, V> implements Tree<K,V> {
 
     @Override
     public void add(K key, V value) {
-        Node<K, V> node = insertNode(key, value);
+        RBNode<K, V> node = insertNode(key, value);
         if (node != null) {
             rebalanceTree(node);
         }
     }
 
     public boolean contains(Object key) {
-        Node<K, V> node = root;
+        RBNode<K, V> node = root;
         while (node != null) {
             @SuppressWarnings("unchecked")
             int compare = comparator.compare((K) key, node.key);
@@ -102,8 +102,8 @@ public class RBTree<K, V> implements Tree<K,V> {
     }
 
 
-    final Node<K, V> insertNode(K key, V value) {
-        Node<K, V> parent = null, head = root;
+    final RBNode<K, V> insertNode(K key, V value) {
+        RBNode<K, V> parent = null, head = root;
         int compare = 1;
         while (head != null) {
             parent = head;
@@ -121,7 +121,7 @@ public class RBTree<K, V> implements Tree<K,V> {
         }
 
         size++;
-        Node<K, V> node = new Node<>(key, value);
+        RBNode<K, V> node = new RBNode<>(key, value);
         node.parent = parent;
         if (parent == null) {
             root = node;
@@ -179,8 +179,8 @@ public class RBTree<K, V> implements Tree<K,V> {
      * Case 2 and 3 represent situation when we consider left subtree of grandparent.
      * Other cases are mirrored them (consider right subtree)
      */
-    private void rebalanceTree(Node<K, V> inserted) {
-        Node<K, V> node = inserted;
+    private void rebalanceTree(RBNode<K, V> inserted) {
+        RBNode<K, V> node = inserted;
         // Traverse tree from inserted to root.
         // Check case where inserted node is rend, and its parent (P) also is red.
         // This mean that P has red child that violates the red property.
@@ -189,12 +189,11 @@ public class RBTree<K, V> implements Tree<K,V> {
             // In order to handle this double-red situation,
             // we will need to consider the color of G's other child, that is, P's sibling, S.
 
-            Node<K, V> parent = parentOf(node);
-            Node<K, V> grandParent = parentOf(parent);
+            RBNode<K, V> parent = parentOf(node);
+            RBNode<K, V> grandParent = parentOf(parent);
             // consider left subtree
             if (parent == leftOf(grandParent)) {
-                considerLestSubtree(node);
-                Node<K, V> uncle = rightOf(grandParent);
+                RBNode<K, V> uncle = rightOf(grandParent);
 
                 if (colorOf(uncle, RED)) {
                     // this is Case 1
@@ -217,7 +216,7 @@ public class RBTree<K, V> implements Tree<K,V> {
                 }
                 // consider right subtree
             } else {
-                Node<K, V> uncle = leftOf(grandParent);
+                RBNode<K, V> uncle = leftOf(grandParent);
                 if (colorOf(uncle, RED)) {
                     // Case 1
                     paintTo(node.parent, BLACK);
@@ -243,26 +242,41 @@ public class RBTree<K, V> implements Tree<K,V> {
         root.color = BLACK;
     }
 
-    private Node<K, V> considerLestSubtree(Node<K,V> node) {
-        Node<K, V> parent = parentOf(node);
-        Node<K, V> grandParent = parentOf(parent);
-        Node<K, V> parentSibling = rightOf(grandParent);
+    /*
+     * N - inserted node.
+     *
+     *       B(G)
+     *     /    \
+     *   R(P)     R(S)
+     *   /
+     * R(N)
+     *
+     * Inserted node and parent node are red. It is violate one of red-black tree rules: red node
+     * can contains only black children.
+     *
+     * Perform recolor for nodes:
+     *
+     *       R(G)
+     *     /    \
+     *   B(P)     B(S)
+     *   /
+     * R(N)
+     *
+     * This operation fix current local issue, but can violet upper nodes.
+     *
+     */
+    private RBNode<K, V> recolorLeftSubtree(RBNode<K,V> node) {
+        RBNode<K, V> parent = parentOf(node);
+        RBNode<K, V> grandParent = parentOf(parent);
+        RBNode<K, V> parentSibling = rightOf(grandParent);
 
-        /*
-         *       B(G)
-         *     /    \
-         *   R(P)     R(S)
-         *   /
-         * R(node)
-         *
-         */
         if (colorOf(parentSibling, RED)) {
             paintTo(parent, BLACK);
             paintTo(parentSibling, BLACK);
             paintTo(grandParent, RED);
         }
 
-        return node;
+        return grandParent;
     }
 
 
@@ -272,13 +286,13 @@ public class RBTree<K, V> implements Tree<K,V> {
     //    {K}   {s}                    {l}    {P}
     //   /  \         ROTATE-LEFT(K)         /   \
     // {l}  {r}             <-             {r}   {s}
-    private void rotateRight(Node<K, V> node) {
+    private void rotateRight(RBNode<K, V> node) {
         if (node == null) {
             return;
         }
 
-        Node<K, V> sibling = node.left;
-        Node<K, V> parent = node.parent;
+        RBNode<K, V> sibling = node.left;
+        RBNode<K, V> parent = node.parent;
 
         node.left = sibling.right;
         if (sibling.right != null) {
@@ -299,12 +313,12 @@ public class RBTree<K, V> implements Tree<K,V> {
         node.parent = sibling;
     }
 
-    final void rotateLeft(Node<K, V> node) {
+    final void rotateLeft(RBNode<K, V> node) {
         if (node == null) {
             return;
         }
-        Node<K, V> sibling = node.right;
-        Node<K, V> parent = node.parent;
+        RBNode<K, V> sibling = node.right;
+        RBNode<K, V> parent = node.parent;
 
         node.right = sibling.left;
         if (sibling.left != null) {
@@ -325,31 +339,31 @@ public class RBTree<K, V> implements Tree<K,V> {
         node.parent = sibling;
     }
 
-    private static <K, V> boolean colorOf(Node<K, V> node, Color color) {
+    private static <K, V> boolean colorOf(RBNode<K, V> node, Color color) {
         return node != null && node.color == color;
     }
 
-    private static <K, V> void paintTo(Node<K, V> parent, Color color) {
+    private static <K, V> void paintTo(RBNode<K, V> parent, Color color) {
         if (parent != null) {
             parent.color = color;
         }
     }
 
-    private static <K, V> Node<K, V> parentOf(Node<K, V> node) {
+    private static <K, V> RBNode<K, V> parentOf(RBNode<K, V> node) {
         return node != null ? node.parent : null;
     }
 
-    private static <K, V> Node<K, V> rightOf(Node<K, V> node) {
+    private static <K, V> RBNode<K, V> rightOf(RBNode<K, V> node) {
         return node != null ? node.right : null;
     }
 
-    private static <K, V> Node<K, V> leftOf(Node<K, V> node) {
+    private static <K, V> RBNode<K, V> leftOf(RBNode<K, V> node) {
         return node != null ? node.left : null;
     }
 
 
     private abstract class NodeInOrderIterator<T> implements Iterator<T> {
-        private Node<K, V> next;
+        private RBNode<K, V> next;
 
         private NodeInOrderIterator() {
             next = root;
@@ -361,11 +375,11 @@ public class RBTree<K, V> implements Tree<K,V> {
             }
         }
 
-        final Node<K, V> nextNode() {
+        final RBNode<K, V> nextNode() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            Node<K, V> current = next;
+            RBNode<K, V> current = next;
             // if you can walk right, walk right, then fully left.
             // otherwise, walk up until you come from left.
             if (next.right != null) {
@@ -377,7 +391,7 @@ public class RBTree<K, V> implements Tree<K,V> {
                 return current;
             } else {
                 while (true) {
-                    Node<K, V> parent = next.parent;
+                    RBNode<K, V> parent = next.parent;
                     if (parent == null) {
                         next = null;
                         return current;
@@ -406,7 +420,7 @@ public class RBTree<K, V> implements Tree<K,V> {
     private class KeyIterator extends NodeInOrderIterator<K> implements Iterator<K> {
         @Override
         public K next() {
-            Node<K, V> node = nextNode();
+            RBNode<K, V> node = nextNode();
             return node.key;
         }
     }
