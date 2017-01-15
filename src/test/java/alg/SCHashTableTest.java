@@ -3,8 +3,7 @@ package alg;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SCHashTableTest {
 
@@ -36,11 +35,23 @@ public class SCHashTableTest {
     }
 
     @Test
-    void addWithRehash() {
+    public void addWithRehash() {
         for (int i = 0; i < 150; i++) {
             table.add(i, 10);
         }
 
         assertEquals(150, table.size());
+    }
+
+    @Test
+    public void addAndTestForContains() {
+        table.add(120, 10);
+        table.add(1000, 10);
+        table.add(-749, 10);
+
+        assertTrue(table.hasKey(1000));
+        assertTrue(table.hasKey(-749));
+        assertFalse(table.hasKey(10001));
+        assertFalse(table.hasKey(50));
     }
 }

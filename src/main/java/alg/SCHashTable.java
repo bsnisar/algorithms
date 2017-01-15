@@ -8,7 +8,7 @@ import java.lang.reflect.Array;
 public class SCHashTable<K, V> {
 
     @SuppressWarnings("unchecked")
-    Node<K, V>[] buckets = (Node<K, V>[]) Array.newInstance(Node.class, 10);
+    private Node<K, V>[] buckets = (Node<K, V>[]) Array.newInstance(Node.class, 10);
 
     private int size;
 
@@ -29,6 +29,17 @@ public class SCHashTable<K, V> {
         return size;
     }
 
+    
+    public boolean hasKey(Object key) {
+        int hash = hash(key);
+        int idx = index(hash, buckets.length);
+        for (Node<K, V> bucket = buckets[idx]; bucket != null; bucket = bucket.next) {
+            if (bucket.key.equals(key))
+                return true;
+        }
+        return false;
+    }
+
     /**
      * Add (Key, Value) and return old value, it it was associated with given key previously.
      *
@@ -40,7 +51,7 @@ public class SCHashTable<K, V> {
         V old = null;
         int hash = hash(key);
         int idx = index(hash, buckets.length);
-        Node<K, V> node = buckets[idx], last = node;
+        Node<K, V> node = buckets[idx], last = null;
         while (node != null && old == null) {
             old = tryReplaceValue(node, key, val);
             last = node;
@@ -88,7 +99,7 @@ public class SCHashTable<K, V> {
      * A hash procedure must be deterministic—meaning
      * that for a given input value it must always generate the same hash value.
      */
-    private int hash(K key) {
+    private int hash(Object key) {
         return key.hashCode();
     }
 
@@ -102,27 +113,28 @@ public class SCHashTable<K, V> {
 
     @SuppressWarnings("unchecked")
     private void doRehash() {
-        Node<K, V>[] newBuckets = (Node<K, V>[]) Array.newInstance(Node.class, buckets.length * 2);
-        for (Node<K, V> bucket : buckets) {
-            if (bucket == null) {
+        final Node<K, V>[] newBuckets = (Node<K, V>[])
+                Array.newInstance(Node.class, buckets.length * 2);
+        for (Node<K, V> node : buckets) {
+            if (node == null) {
                 continue;
             }
 
             do {
-                Node<K, V> next = bucket.next;
-                bucket.next = null;
-
-                int hash = hash(bucket.key);
-                int idx = index(hash, newBuckets.length);
+                Node<K, V> next = node.next;
+                node.next = null;
+                final int hash = hash(node.key);
+                final int idx = index(hash, newBuckets.length);
                 Node<K, V> newBucket = newBuckets[idx];
 
-                while (hasNext(newBucket))
+                while (hasNext(newBucket)) {
                     newBucket = newBucket.next;
+                }
 
-                addMapping(idx, newBucket, newBuckets, bucket);
+                addMapping(idx, newBucket, newBuckets, node);
 
-                bucket = next;
-            } while (bucket != null);
+                node = next;
+            } while (node != null);
         }
 
         buckets = newBuckets;
