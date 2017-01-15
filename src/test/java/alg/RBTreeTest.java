@@ -19,6 +19,7 @@ public class RBTreeTest {
     }
 
     private static final int VALUE = 1;
+
     private static final Comparator<Integer> COMPARATOR = new Comparator<Integer>() {
         @Override
         public int compare(Integer o1, Integer o2) {
@@ -72,4 +73,23 @@ public class RBTreeTest {
         assertEquals(expectedOrder, treeKeysOrdered);
     }
 
+    @Test
+    public void cgeckRootSubtreeAfterInsertions() {
+        tree.add(8, VALUE);
+        tree.add(18, VALUE);
+        tree.add(5, VALUE);
+        tree.add(15, VALUE);
+        tree.add(17, VALUE);
+        tree.add(18, VALUE);
+        tree.add(25, VALUE);
+        tree.add(40, VALUE);
+
+        assertEquals(Integer.valueOf(8), tree.root.key);
+        assertEquals(Integer.valueOf(5), tree.root.left.key);
+        assertEquals(Integer.valueOf(17), tree.root.right.key);
+
+        assertEquals(RBTree.Color.BLACK, tree.root.color, "root is BLACK");
+        assertEquals(RBTree.Color.RED, tree.root.right.color, "right is RED");
+        assertEquals(RBTree.Color.BLACK, tree.root.left.color, "left is BLACK");
+    }
 }

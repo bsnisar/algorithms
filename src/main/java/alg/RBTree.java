@@ -6,7 +6,7 @@ import static alg.RBTree.Color.BLACK;
 import static alg.RBTree.Color.RED;
 
 
-public class RBTree<K, V> {
+public class RBTree<K, V> implements Tree<K,V> {
 
     enum Color {
         RED, BLACK
@@ -48,6 +48,7 @@ public class RBTree<K, V> {
         return null;
     }
 
+    @Override
     public int size() {
         return size;
     }
@@ -75,6 +76,7 @@ public class RBTree<K, V> {
         };
     }
 
+    @Override
     public void add(K key, V value) {
         Node<K, V> node = insertNode(key, value);
         if (node != null) {
@@ -99,12 +101,7 @@ public class RBTree<K, V> {
         return false;
     }
 
-    /**
-     * Insert node into tree if possible.
-     *
-     * @param key   node key
-     * @param value node value
-     */
+
     final Node<K, V> insertNode(K key, V value) {
         Node<K, V> parent = null, head = root;
         int compare = 1;
@@ -187,7 +184,7 @@ public class RBTree<K, V> {
         // Traverse tree from inserted to root.
         // Check case where inserted node is rend, and its parent (P) also is red.
         // This mean that P has red child that violates the red property.
-        while (hasColor(parentOf(node), RED) && node != root) {
+        while (colorOf(parentOf(node), RED) && node != root) {
 
             // In order to handle this double-red situation,
             // we will need to consider the color of G's other child, that is, P's sibling, S.
@@ -196,9 +193,10 @@ public class RBTree<K, V> {
             Node<K, V> grandParent = parentOf(parent);
             // consider left subtree
             if (parent == leftOf(grandParent)) {
+                considerLestSubtree(node);
                 Node<K, V> uncle = rightOf(grandParent);
 
-                if (hasColor(uncle, RED)) {
+                if (colorOf(uncle, RED)) {
                     // this is Case 1
                     paintTo(parent, BLACK);
                     paintTo(uncle, BLACK);
@@ -220,7 +218,7 @@ public class RBTree<K, V> {
                 // consider right subtree
             } else {
                 Node<K, V> uncle = leftOf(grandParent);
-                if (hasColor(uncle, RED)) {
+                if (colorOf(uncle, RED)) {
                     // Case 1
                     paintTo(node.parent, BLACK);
                     paintTo(uncle, BLACK);
@@ -245,13 +243,36 @@ public class RBTree<K, V> {
         root.color = BLACK;
     }
 
+    private Node<K, V> considerLestSubtree(Node<K,V> node) {
+        Node<K, V> parent = parentOf(node);
+        Node<K, V> grandParent = parentOf(parent);
+        Node<K, V> parentSibling = rightOf(grandParent);
+
+        /*
+         *       B(G)
+         *     /    \
+         *   R(P)     R(S)
+         *   /
+         * R(node)
+         *
+         */
+        if (colorOf(parentSibling, RED)) {
+            paintTo(parent, BLACK);
+            paintTo(parentSibling, BLACK);
+            paintTo(grandParent, RED);
+        }
+
+        return node;
+    }
+
+
     //        |                             |
     //       {P}      ROTATE-RIGHT(P)      {K}
     //      /   \          ->            /    \
     //    {K}   {s}                    {l}    {P}
     //   /  \         ROTATE-LEFT(K)         /   \
     // {l}  {r}             <-             {r}   {s}
-    final void rotateRight(Node<K, V> node) {
+    private void rotateRight(Node<K, V> node) {
         if (node == null) {
             return;
         }
@@ -304,7 +325,7 @@ public class RBTree<K, V> {
         node.parent = sibling;
     }
 
-    private static <K, V> boolean hasColor(Node<K, V> node, Color color) {
+    private static <K, V> boolean colorOf(Node<K, V> node, Color color) {
         return node != null && node.color == color;
     }
 
