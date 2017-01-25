@@ -3,6 +3,7 @@ package alg;
 
 public interface Tree<K,V> {
 
+    
     int size();
 
     /**

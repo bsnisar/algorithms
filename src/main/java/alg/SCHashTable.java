@@ -4,6 +4,7 @@ import java.lang.reflect.Array;
 
 /**
  * Separate Chaining Hash Table.
+ * @author bsnisar
  */
 public class SCHashTable<K, V> {
 

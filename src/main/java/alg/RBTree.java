@@ -6,6 +6,10 @@ import static alg.RBTree.Color.BLACK;
 import static alg.RBTree.Color.RED;
 
 
+/**
+ * Red black Tree.
+ * @author bsnisar
+ */
 public class RBTree<K, V> implements Tree<K,V> {
 
     enum Color {
